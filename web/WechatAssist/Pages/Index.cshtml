@@ -1,0 +1,42 @@
+﻿@*@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+*@
+
+@page
+@model ChatHistoryModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div style="width: 100%;">
+    <h1 class="display-4">七年一班❀梦想生花❀ 文件下载</h1>
+    <p>本工具仅为家长提供方便，请合法使用相关内容。</p>
+</div>
+
+<div style="width: 1360px;">
+    @foreach (var chat in @Model.Chat)
+    {
+        @if (chat.MsgType == Entities.MsgType.MSGTYPE_IMAGE || chat.MsgType == Entities.MsgType.MSGTYPE_APP || chat.MsgType == Entities.MsgType.MSGTYPE_VIDEO)
+        {
+            <div style="width: 100%;word-wrap:break-word;">
+                <div style="width: 800px; float: left; margin: 20px 0px 10px 0px;background-color:darkcyan;color: white; padding-left: 6px;">
+                    <span style="font-size:larger;font-weight:bolder;">@TimeZone.CurrentTimeZone.ToLocalTime(new DateTime (chat.CreateTime * 10000000L + new DateTime(1970, 1, 1).Ticks))</span>
+                </div>
+                <div style="width: 750px; float: left; margin-left: 50px; background-color:lightblue;padding-left: 6px;">
+
+                    @chat.MsgType.ToString()
+                    <a href="./@chat.Filepath">download - @chat.Filename</a>
+                </div>
+
+            </div>
+        }
+    }
+</div>
