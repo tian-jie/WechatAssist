@@ -5,10 +5,27 @@ const qrcode = require('qrcode-terminal')
 const fs = require('fs')
 const request = require('request')
 const Database = require('./src/util/database.js')
-//import database from './src/util/database'
 
 let dotenv = require('dotenv');
 dotenv.config('./env');
+
+var log4js = require('log4js');
+var logger = log4js.getLogger();
+
+log4js.configure({
+  appenders: [{
+    type: 'logLevelFilter',
+    level: 'DEBUG',
+    appender: {
+      type: 'DateFile',
+      filename: 'default',
+      pattern: '-yyyy-MM-dd.log',
+      alwaysIncludePattern: true
+    }
+  }, {
+    type: "console"
+  }]
+});
 
 
 let bot
@@ -38,12 +55,6 @@ async function main() {
 
   await sleep(1000);
 
-  // try {
-  //   db.saveUserToDatabase();
-  // } catch (e) {
-  //   console.log(e);
-  // }
-
   /**
    * 尝试获取本地登录数据，免扫码
    * 这里演示从本地文件中获取数据
@@ -69,33 +80,33 @@ async function main() {
     qrcode.generate('https://login.weixin.qq.com/l/' + uuid, {
       small: true
     })
-    console.log('二维码链接：', 'https://login.weixin.qq.com/qrcode/' + uuid)
+    logger.info('二维码链接：', 'https://login.weixin.qq.com/qrcode/' + uuid)
   })
   /**
    * 登录用户头像事件，手机扫描后可以得到登录用户头像的Data URL
    */
   bot.on('user-avatar', avatar => {
-    console.log('登录用户头像Data URL：', avatar)
+    logger.info('登录用户头像Data URL：', avatar)
   })
   /**
    * 登录成功事件
    */
   bot.on('login', () => {
-    console.log('登录成功')
+    logger.info('登录成功: ', JSON.stringify(bot.botData));
     // 保存数据，将数据序列化之后保存到任意位置
     fs.writeFileSync('./sync-data.json', JSON.stringify(bot.botData))
     try {
       db.saveLoginUserToDatabase(bot.botData.user);
       //db.saveUserToDatabase(bot.botData.user);
     } catch (e) {
-      console.log(e);
+      logger.error(e);
     }
   })
   /**
    * 登出成功事件
    */
   bot.on('logout', () => {
-    console.log('登出成功')
+    logger.info('登出成功: ', JSON.stringify(bot.botData));
     // 清除数据
     fs.unlinkSync('./sync-data.json')
   })
@@ -103,7 +114,7 @@ async function main() {
    * 联系人更新事件，参数为被更新的联系人列表
    */
   bot.on('contacts-updated-finished', contacts => {
-    console.log('联系人数量：', Object.keys(bot.contacts).length)
+    logger.debug('联系人数量：', Object.keys(bot.contacts).length)
     // 联系人存数据库
     db.saveUserToDatabase(bot.user.UserName, contacts);
   })
@@ -111,7 +122,7 @@ async function main() {
    * 错误事件，参数一般为Error对象
    */
   bot.on('error', err => {
-    console.error('错误：', err)
+    logger.error('错误：', err)
   })
   /**
    * 如何发送消息
@@ -228,19 +239,20 @@ async function main() {
       /**
        * 判断消息类型
        */
+      logger.info(msg.Content)
+
       switch (msg.MsgType) {
         case bot.CONF.MSGTYPE_TEXT:
           /**
            * 文本消息
            */
-          console.log(msg.Content)
           db.saveChatToDatabase(msg);
           break
         case bot.CONF.MSGTYPE_IMAGE:
           /**
            * 图片消息
            */
-          console.log('图片消息，保存到本地')
+          logger.info('图片消息，保存到本地')
           bot.getMsgImg(msg.MsgId).then(res => {
             fs.writeFileSync(`./media/${msg.MsgId}.jpg`, res.data)
             msg.Filepath = `/media/${msg.MsgId}.jpg`
@@ -253,7 +265,7 @@ async function main() {
           /**
            * 语音消息
            */
-          console.log('语音消息，保存到本地')
+          logger.info('语音消息，保存到本地')
           bot.getVoice(msg.MsgId).then(res => {
             fs.writeFileSync(`./media/${msg.MsgId}.mp3`, res.data)
             msg.Filepath = `/media/${msg.MsgId}.mp3`
@@ -267,7 +279,7 @@ async function main() {
           /**
            * 表情消息
            */
-          console.log('表情消息，保存到本地')
+          logger.info('表情消息，保存到本地')
           bot.getMsgImg(msg.MsgId).then(res => {
             fs.writeFileSync(`./media/${msg.MsgId}.gif`, res.data)
             msg.Filepath = `/media/${msg.MsgId}.gif`
@@ -281,7 +293,7 @@ async function main() {
           /**
            * 视频消息
            */
-          console.log('视频消息，保存到本地')
+          logger.info('视频消息，保存到本地')
           bot.getVideo(msg.MsgId).then(res => {
             fs.writeFileSync(`./media/${msg.MsgId}.mp4`, res.data)
             msg.Filepath = `/media/${msg.MsgId}.mp4`
@@ -295,12 +307,12 @@ async function main() {
             /**
              * 文件消息
              */
-            console.log('文件消息，保存到本地')
+            logger.info('文件消息，保存到本地')
             bot.getDoc(msg.FromUserName, msg.MediaId, msg.FileName).then(res => {
               fs.writeFileSync(`./media/${msg.MsgId}-${msg.FileName}`, res.data)
               msg.Filepath = `/media/${msg.MsgId}-${msg.FileName}`
               db.saveChatToDatabase(msg);
-              console.log(res.type);
+              logger.info(res.type);
             }).catch(err => {
               bot.emit('error', err)
             })
@@ -380,27 +392,27 @@ main();
 
 
 
-  function sleep(time) {
-    return new Promise(function (resolve) {
-      setTimeout(resolve, time);
-    });
-  }
+function sleep(time) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time);
+  });
+}
 
-  Date.prototype.format = function (fmt) {
-    var o = {
-      "M+": this.getMonth() + 1, //月份
-      "d+": this.getDate(), //日
-      "h+": this.getHours() % 12 == 0 ? 12 : this.getHours() % 12, //小时
-      "H+": this.getHours(), //小时
-      "m+": this.getMinutes(), //分
-      "s+": this.getSeconds(), //秒
-      "q+": Math.floor((this.getMonth() + 3) / 3), //季度
-      "S": this.getMilliseconds() //毫秒
-    };
-    if (/(y+)/.test(fmt))
-      fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
-    for (var k in o)
-      if (new RegExp("(" + k + ")").test(fmt))
-        fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-    return fmt;
-  } 
+Date.prototype.format = function (fmt) {
+  var o = {
+    "M+": this.getMonth() + 1, //月份
+    "d+": this.getDate(), //日
+    "h+": this.getHours() % 12 == 0 ? 12 : this.getHours() % 12, //小时
+    "H+": this.getHours(), //小时
+    "m+": this.getMinutes(), //分
+    "s+": this.getSeconds(), //秒
+    "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+    "S": this.getMilliseconds() //毫秒
+  };
+  if (/(y+)/.test(fmt))
+    fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+  for (var k in o)
+    if (new RegExp("(" + k + ")").test(fmt))
+      fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+  return fmt;
+} 

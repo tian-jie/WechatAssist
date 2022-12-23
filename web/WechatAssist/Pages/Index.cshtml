@@ -24,16 +24,19 @@
 <div style="width: 1360px;">
     @foreach (var chat in @Model.Chat)
     {
-        @if (chat.MsgType == Entities.MsgType.MSGTYPE_IMAGE || chat.MsgType == Entities.MsgType.MSGTYPE_APP || chat.MsgType == Entities.MsgType.MSGTYPE_VIDEO)
+        @if (chat.MsgType == Entities.MsgType.MSGTYPE_TEXT || chat.MsgType == Entities.MsgType.MSGTYPE_IMAGE || chat.MsgType == Entities.MsgType.MSGTYPE_APP || chat.MsgType == Entities.MsgType.MSGTYPE_VIDEO)
         {
             <div style="width: 100%;word-wrap:break-word;">
                 <div style="width: 800px; float: left; margin: 20px 0px 10px 0px;background-color:darkcyan;color: white; padding-left: 6px;">
-                    <span style="font-size:larger;font-weight:bolder;">@TimeZone.CurrentTimeZone.ToLocalTime(new DateTime (chat.CreateTime * 10000000L + new DateTime(1970, 1, 1, 8, 0, 0).Ticks))</span>
+                    <span style="font-size:larger;font-weight:bolder;">@TimeZone.CurrentTimeZone.ToLocalTime(new DateTime (chat.CreateTime * 10000000L + new DateTime(1970, 1, 1, 8, 0, 0).Ticks))</span> -- 
+                    @if (chat.MsgType == Entities.MsgType.MSGTYPE_IMAGE || chat.MsgType == Entities.MsgType.MSGTYPE_APP || chat.MsgType == Entities.MsgType.MSGTYPE_VIDEO)
+                    {
+                        <a href="./@chat.Filepath">download @chat.MsgType.ToString().Substring(8) - @chat.Filename</a>
+                    }
                 </div>
                 <div style="width: 750px; float: left; margin-left: 50px; background-color:lightblue;padding-left: 6px;">
-
-                    @chat.MsgType.ToString()
-                    <a href="./@chat.Filepath">download - @chat.Filename</a>
+                    @Html.Raw(chat.Content.Replace("\n", "<br/>"));
+                    
                 </div>
 
             </div>
