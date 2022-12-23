@@ -103,7 +103,7 @@ namespace WechatAssist.Entities
         MSGTYPE_VOICE= 34,
         MSGTYPE_VIDEO= 43,
         MSGTYPE_MICROVIDEO= 62,
-        MSGTYPE_EMOTICON= 47,
+        MSGTYPE_EMOTION= 47,
         MSGTYPE_APP= 49,
         MSGTYPE_VOIPMSG= 50,
         MSGTYPE_VOIPNOTIFY= 52,
