@@ -1,9 +1,11 @@
 require('babel-register')
 import mssql from 'mssql'
+var log4js = require('log4js');
 
+
+var logger = log4js.getLogger('result');
 
 class Database {
-  logger = log4js.getLogger();
 
   constructor(sqlConfig) {
     if (!sqlConfig) {

@@ -10,23 +10,21 @@ let dotenv = require('dotenv');
 dotenv.config('./env');
 
 var log4js = require('log4js');
-var logger = log4js.getLogger();
+var logger = log4js.getLogger('result');
 
-log4js.configure({
-  appenders: [{
-    type: 'logLevelFilter',
-    level: 'DEBUG',
-    appender: {
-      type: 'DateFile',
-      filename: 'default',
-      pattern: '-yyyy-MM-dd.log',
-      alwaysIncludePattern: true
-    }
-  }, {
-    type: "console"
-  }]
+log4js.configure({ 
+  appenders: {
+    out: { type: 'console' }, 
+    task: { type: 'dateFile', filename: 'logs/task',"pattern":"-yy-MM-dd.log", alwaysIncludePattern:true }, 
+    result: { type: 'dateFile', filename: 'logs/result',"pattern":"-yy-MM-dd.log", alwaysIncludePattern:true}, 
+    error: { type: 'dateFile', filename: 'logs/error', "pattern":"-yy-MM-dd.log",alwaysIncludePattern:true}, 
+    default: { type: 'dateFile', filename: 'logs/default', "pattern":"-yy-MM-dd.log",alwaysIncludePattern:true}, 
+    rate: { type: 'dateFile', filename: 'logs/rate', "pattern":"-yy-MM-dd.log",alwaysIncludePattern:true} 
+  },
+  categories: {
+    default: { appenders: ['out','default'], level: 'debug' },
+  }
 });
-
 
 let bot
 

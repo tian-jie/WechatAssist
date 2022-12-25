@@ -39,4 +39,4 @@ node_modules
 /typings
 .idea/*
 media
-
+sync-data.json
